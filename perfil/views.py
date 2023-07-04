@@ -14,7 +14,7 @@ def cadastrar_banco(request):
     valor = request.POST.get('valor')
     icone = request.FILES.get('icone')
     
-    if len(apelido.strip()) == 0 or len(valor.strip()) == 0:
+    if len(apelido.strip()) == 0 or len(valor.strip()) == 0 or icone is None:
         return redirect('/perfil/gerenciar/')
     
     conta = Conta(
