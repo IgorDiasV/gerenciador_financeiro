@@ -3,6 +3,7 @@ from perfil.models import Conta, Categoria
 from extrato.models import Valores
 from django.contrib import messages
 from django.contrib.messages import constants
+from datetime import datetime
 def novo_valor(request):
     if request.method == "GET":
         contas = Conta.objects.all()
@@ -28,15 +29,34 @@ def novo_valor(request):
         valores.save()
 
         conta = Conta.objects.get(id=conta)
-
+        mensagem = ''
         if tipo == 'E':
             conta.valor += int(valor)
+            mensagem = "Entrada cadastrada com Sucesso"
         else:
             conta.valor -= int(valor)
+            mensagem = "Saida cadastrada com Sucesso"
 
         conta.save()
 
         
 
-        messages.add_message(request, constants.SUCCESS, 'Categoria cadastrada com sucesso')
+        messages.add_message(request, constants.SUCCESS, mensagem)
         return redirect('/extrato/novo_valor')
+    
+def view_extrato(request):
+    contas = Conta.objects.all()
+    categorias = Categoria.objects.all()
+
+        
+    valores = Valores.objects.filter(data__month=datetime.now().month)
+    
+    conta_get = request.GET.get('conta')
+    categoria_get = request.GET.get('categoria')
+
+    if conta_get:
+        valores = valores.filter(conta__id=conta_get)
+    if categoria_get:
+        valores = valores.filter(categoria__id=categoria_get)
+
+    return render(request, 'view_extrato.html', {'valores': valores, 'contas': contas, 'categorias': categorias})
