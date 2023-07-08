@@ -4,13 +4,22 @@ from django.contrib.messages import constants
 from django.db.models import Sum
 from .models import Conta, Categoria
 from .utils import calcula_total
-
-
+from extrato.models import Valores
+from datetime import datetime 
 
 def home(request):
+    
+    valores = Valores.objects.filter(data__month=datetime.now().month)
+    entradas = valores.filter(tipo='E')
+    saidas = valores.filter(tipo='S')
+
+    total_entradas = calcula_total(entradas, 'valor')
+    total_saidas = calcula_total(saidas, 'valor')
+    
     contas = Conta.objects.all()
     saldo_total = calcula_total(contas, 'valor')
-    return render(request, 'home.html', {'contas': contas, 'saldo_total': saldo_total,})
+    
+    return render(request, 'home.html', {'contas': contas, 'saldo_total': saldo_total, 'total_entrada':total_entradas, 'total_saidas':total_saidas})
 
 
 def gerenciar(request):
@@ -74,3 +83,12 @@ def update_categoria(request, id):
     categoria.save()
 
     return redirect('/perfil/gerenciar/')
+
+def dashboard(request):
+    dados = {}
+    categorias = Categoria.objects.all()
+
+    for categoria in categorias:
+        dados[categoria.categoria] = Valores.objects.filter(categoria=categoria).aggregate(Sum('valor'))['valor__sum']
+
+    return render(request, 'dashboard.html', {'labels': list(dados.keys()), 'values': list(dados.values())})
